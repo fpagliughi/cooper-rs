@@ -57,8 +57,7 @@ impl SharedMap {
     }
 
     /// Insert a value into the shared map.
-    pub async fn insert(&self, key: String, val: String)
-    {
+    pub async fn insert(&self, key: String, val: String) {
         self.actor.cast(|state: &mut State| Box::pin(async move {
             state.insert(key, val);
         })).await
@@ -67,8 +66,7 @@ impl SharedMap {
 
     /// Gets the value, if any, from the shared map that is
     /// associated with the key.
-    pub async fn get(&self, key: String) -> Option<String>
-    {
+    pub async fn get(&self, key: String) -> Option<String> {
         self.actor.call(|state: &mut State| Box::pin(async move {
             state.get(&key).map(|v| v.to_string())
         })).await
