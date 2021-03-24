@@ -9,6 +9,9 @@ edition = "2018"
 readme = "README.md"
 keywords = ["actors", "futures"]
 categories = ["asynchronous", "concurrency"]
+description = """
+A simple, in-process, async Actor library for Rust.
+"""
 
 [dependencies]
 futures = "0.3"
