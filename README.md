@@ -8,10 +8,10 @@ This library is somewhat distinct in that the messages sent to the actors are _f
 
 The library offers two types of implementations:
 
-- Actor&lt;T&gt; which is async/await compatible and require a runtime, such as `tokio`, `async-std`, or `smol`
-- ThreadedActor&lt;T&gt; which use an OS thread per actor, but does not require an additional runtime.
+- `Actor<T>` which is async/await compatible and require a runtime, such as `tokio`, `async-std`, or `smol`
+- `ThreadedActor<T>` which use an OS thread per actor, but does not require an additional runtime.
 
-If you application needs use thousands of actors, to spin them up and down often, or will use them for lots of I/O-bound operations, then async actors are extremely more efficient. But if an application needs just a few actors, isn't otherwise using an async runtime, and/or will be doing compute-heavy, CPU-bound operations, then threaded actors may be useful.
+If your application needs use thousands of actors, to spin them up and down often, or will use them for lots of I/O-bound operations, then async actors are extremely more efficient. But if an application needs just a few actors, isn't otherwise using an async runtime, and/or will be doing compute-heavy, CPU-bound operations, then threaded actors may be useful.
 
 The different actor types can also be mixed within an application as needed.
 
