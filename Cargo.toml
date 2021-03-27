@@ -1,6 +1,6 @@
 [package]
 name = "cooper"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["Frank Pagliughi <fpagliughi@mindspring.com>"]
 repository = "https://github.com/fpagliughi/cooper-rs"
 homepage = "https://github.com/fpagliughi/cooper-rs"
@@ -16,5 +16,5 @@ A simple, in-process, async Actor library for Rust.
 [dependencies]
 futures = "0.3"
 smol = "1.2"
-
+crossbeam-channel = "0.5"
 

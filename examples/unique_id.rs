@@ -27,7 +27,7 @@ impl UniqueId {
 
     /// Gets a unique ID as the next integer value in the sequence.
     pub async fn get_unique_id(&self) -> u32 {
-        self.actor.call(|state: &mut u32| Box::pin(async move {
+        self.actor.call(|state| Box::pin(async move {
             *state += 1;
             *state
         })).await
