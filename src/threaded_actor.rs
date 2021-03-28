@@ -41,22 +41,10 @@ pub struct ThreadedActor<T> {
 
 impl<T> ThreadedActor<T>
 where
-    T: Default + Send + 'static,
-{
-    /// Creates an actor with a default initial state.
-    ///
-    /// This requires the state type to implement the Default trait.
-    pub fn new() -> Self {
-        Self::from_state(T::default())
-    }
-}
-
-impl<T> ThreadedActor<T>
-where
     T: Send + 'static,
 {
     /// Creates a threaded actor with the specified initial state.
-    pub fn from_state(state: T) -> Self {
+    pub fn new(state: T) -> Self {
         let (tx, rx) = channel::unbounded();
 
         thread::spawn(move || {
@@ -85,6 +73,10 @@ where
         self.tx.send(Box::new(f)).unwrap();
     }
 
+    /// Sends a synchronous request to the actor.
+    ///
+    /// This queues the request to the actor thread, then blocks waiting for
+    /// a response.
     pub fn call<F, R>(&self, f: F) -> R
     where
         F: FnOnce(&mut T) -> R + Send + 'static,
@@ -102,28 +94,15 @@ where
     }
 }
 
-// --------------------------------------------------------------------------
-
-/*
-fn main() {
-    println!("Initializing...");
-
-    println!();
-    println!("size_of(ptr): {}", mem::size_of::<&u32>());
-    println!("size_of(Task): {}", mem::size_of::<BoxedTask::<u32,()>>());
-    println!();
-
-    let actor = ThreadedActor::<u32>::new();
-
-    actor.cast(|val| { *val += 1; });
-    actor.cast(|val| { *val += 2; });
-
-    let v = actor.call(|val| { *val });
-    println!("Value: {}", v);
-
-    println!("\nCleaning up...");
-    drop(actor);
-
-    println!("Done");
+impl<T> Default for ThreadedActor<T>
+where
+    T: Default + Send + 'static,
+{
+    /// Creates an actor with a default initial state.
+    ///
+    /// This requires the state type to implement the Default trait.
+    fn default() -> Self {
+        Self::new(T::default())
+    }
 }
-*/
+

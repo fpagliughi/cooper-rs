@@ -41,20 +41,10 @@ where
 
 impl<S> Actor<S>
 where
-    S: Default + Send + 'static,
-{
-    /// Creates a new actor with a default state.
-    pub fn new() -> Self {
-        Self::from_state(S::default())
-    }
-}
-
-impl<S> Actor<S>
-where
     S: Send + 'static,
 {
     /// Creates a new actor from an initial state.
-    pub fn from_state(state: S) -> Self {
+    pub fn new(state: S) -> Self {
         let (tx, rx) = channel::unbounded();
 
         // TODO: Stash the handle somewhere?
@@ -129,3 +119,15 @@ where
         self.call(|_| Box::pin(async move {})).await
     }
 }
+
+impl<S> Default for Actor<S>
+where
+    S: Default + Send + 'static,
+{
+    /// Creates a new actor with a default state.
+    fn default() -> Self {
+        Self::new(S::default())
+    }
+}
+
+

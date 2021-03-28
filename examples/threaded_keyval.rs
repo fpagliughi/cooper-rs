@@ -18,7 +18,7 @@ use cooper::ThreadedActor;
 type State = HashMap<String, String>;
 
 /// An actor that can act as a shared key/value store of strings.
-#[derive(Clone)]
+#[derive(Default, Clone)]
 pub struct SharedMap {
     actor: ThreadedActor<State>,
 }
@@ -26,7 +26,7 @@ pub struct SharedMap {
 impl SharedMap {
     /// Create a new actor to share a key/value map of string.
     pub fn new() -> Self {
-        Self { actor: ThreadedActor::new() }
+        Self::default()
     }
 
     /// Insert a value into the shared map.

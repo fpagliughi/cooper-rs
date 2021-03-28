@@ -14,7 +14,7 @@
 use cooper::Actor;
 
 /// An actor that can create unique integer values from a counting integer.
-#[derive(Clone)]
+#[derive(Default, Clone)]
 pub struct UniqueId {
     actor: Actor<u32>,
 }
@@ -22,7 +22,7 @@ pub struct UniqueId {
 impl UniqueId {
     /// Create a new UniqueId actor
     pub fn new() -> Self {
-        Self { actor: Actor::new() }
+        Self::default()
     }
 
     /// Gets a unique ID as the next integer value in the sequence.
