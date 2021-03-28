@@ -25,12 +25,10 @@ pub struct SharedMap {
 
 impl SharedMap {
     /// Create a new actor to share a key/value map of string.
-    pub fn new() -> Self {
-        Self::default()
-    }
+    pub fn new() -> Self { Self::default() }
 
     /// Insert a value into the shared map.
-    pub async fn insert<K,V>(&self, key: K, val: V)
+    pub fn insert<K,V>(&self, key: K, val: V)
     where
         K: Into<String>,
         V: Into<String>,
@@ -40,7 +38,7 @@ impl SharedMap {
 
         self.actor.cast(|state| Box::pin(async move {
             state.insert(key, val);
-        })).await
+        }));
     }
 
 
@@ -65,7 +63,7 @@ fn main() {
 
     let h = smol::spawn(async move {
         println!("Inserting entry 'city'...");
-        map.insert("city", "Boston").await;
+        map.insert("city", "Boston");
 
         println!("Retrieving entry...");
         match map.get("city").await {

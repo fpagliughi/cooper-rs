@@ -25,9 +25,7 @@ pub struct SharedMap {
 
 impl SharedMap {
     /// Create a new actor to share a key/value map of string.
-    pub fn new() -> Self {
-        Self::default()
-    }
+    pub fn new() -> Self { Self::default() }
 
     /// Insert a value into the shared map.
     pub fn insert<K,V>(&self, key: K, val: V)

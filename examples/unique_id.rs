@@ -21,9 +21,7 @@ pub struct UniqueId {
 
 impl UniqueId {
     /// Create a new UniqueId actor
-    pub fn new() -> Self {
-        Self::default()
-    }
+    pub fn new() -> Self { Self::default() }
 
     /// Gets a unique ID as the next integer value in the sequence.
     pub async fn get_unique_id(&self) -> u32 {

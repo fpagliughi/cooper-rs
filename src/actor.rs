@@ -11,7 +11,7 @@
 //! cooper
 
 use futures::future::BoxFuture;
-use smol::channel::{self, Receiver, Sender};
+use async_channel::{self as channel, Receiver, Sender};
 use std::fmt::Debug;
 
 /// Message type for the Actor.
@@ -67,7 +67,7 @@ where
     /// This is a totally asynchronous operation. Awaiting the returned
     /// future only waits for the operation to be placed in the queue.
     /// It does not wait for the operation to be executed.
-    pub async fn cast<F>(&self, f: F)
+    pub fn cast<F>(&self, f: F)
     where
         F: for<'a> FnOnce(&'a mut S) -> BoxFuture<'a, ()>,
         F: 'static + Send,
@@ -81,7 +81,7 @@ where
         };
 
         // TODO: Should we at least log the error?
-        let _ = self.tx.send(msg).await;
+        let _ = self.tx.try_send(msg);
     }
 
     /// A call is a synchronous operation within the async task.
