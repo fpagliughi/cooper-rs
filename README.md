@@ -43,7 +43,7 @@ Please make any pull requests against the `develop` branch as we will use that f
 
 ## The Basics
 
-An Actor is an object containing an internal state and a private execucution context that can be used to update that state. The application and other actors communicate with it by sending it messages, which the actor processes in order, sequentially. Since the state is only available to the internal execution context, there are no data races or contention, and no need for locks.
+An Actor is an object containing an internal state and a private execution context that can be used to update that state. The application and other actors communicate with it by sending it messages, which the actor processes in order, sequentially. Since the state is only available to the internal execution context, there are no data races or contention, and no need for locks.
 
 This library borrows some ideas and nomenclature from the Erlang and Elixir languages:
 

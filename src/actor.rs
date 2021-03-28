@@ -10,17 +10,12 @@
 //
 //! cooper
 
-use std::fmt::Debug;
 use futures::future::BoxFuture;
-use smol::{
-    channel::{
-        self,
-        Sender,
-        Receiver,
-    },
-};
+use smol::channel::{self, Receiver, Sender};
+use std::fmt::Debug;
 
 /// Message type for the Actor.
+///
 /// This wraps an async function type that takes a mutable reference to a
 /// state object. Implementations of actor objects can queue functions and
 /// closures to process the state.
@@ -38,7 +33,7 @@ struct Message<S> {
 #[derive(Clone)]
 pub struct Actor<S>
 where
-    S: Send + 'static
+    S: Send + 'static,
 {
     /// The channel to send requests to the actor's processor task.
     tx: Sender<Message<S>>,
@@ -46,9 +41,9 @@ where
 
 impl<S> Actor<S>
 where
-    S: Default + Send + 'static
+    S: Default + Send + 'static,
 {
-    /// Create a new actor with a default state
+    /// Creates a new actor with a default state.
     pub fn new() -> Self {
         Self::from_state(S::default())
     }
@@ -56,17 +51,15 @@ where
 
 impl<S> Actor<S>
 where
-    S: Send + 'static
+    S: Send + 'static,
 {
-    /// Creates a new actor from an initial state
+    /// Creates a new actor from an initial state.
     pub fn from_state(state: S) -> Self {
         let (tx, rx) = channel::unbounded();
 
         // TODO: Stash the handle somewhere?
         //  Perhaps make a registry of running actors?
-        smol::spawn(async move {
-            Self::run(state, rx).await
-        }).detach();
+        smol::spawn(async move { Self::run(state, rx).await }).detach();
 
         Self { tx }
     }
@@ -81,7 +74,7 @@ where
         }
     }
 
-    /// This is a totally asynchronous opertion. Awaiting the returned
+    /// This is a totally asynchronous operation. Awaiting the returned
     /// future only waits for the operation to be placed in the queue.
     /// It does not wait for the operation to be executed.
     pub async fn cast<F>(&self, f: F)
@@ -90,16 +83,18 @@ where
         F: 'static + Send,
     {
         let msg = Message {
-            func: Box::new(move |state| Box::pin(async move {
-                f(state).await;
-            }))
+            func: Box::new(move |state| {
+                Box::pin(async move {
+                    f(state).await;
+                })
+            }),
         };
 
         // TODO: Should we at least log the error?
         let _ = self.tx.send(msg).await;
     }
 
-    /// A call is a synchronous opertion within the async task.
+    /// A call is a synchronous operation within the async task.
     /// It will queue the request, wait for it to execute, and
     /// return the result.
     pub async fn call<F, R>(&self, f: F) -> R
@@ -110,16 +105,17 @@ where
     {
         let (tx, rx) = channel::bounded(1);
         let msg = Message {
-            func: Box::new(move |state| Box::pin(async move {
-                let res = f(state).await;
-                let _ = tx.send(res).await;
-            }))
+            func: Box::new(move |state| {
+                Box::pin(async move {
+                    let res = f(state).await;
+                    let _ = tx.send(res).await;
+                })
+            }),
         };
 
         let _ = self.tx.send(msg).await;
         // TODO: Return an error instead of panicking
-        rx.recv().await
-            .expect("Actor is gone")
+        rx.recv().await.expect("Actor is gone")
     }
 
     /// Blocks the calling task until all requests up to this point have
@@ -133,4 +129,3 @@ where
         self.call(|_| Box::pin(async move {})).await
     }
 }
-

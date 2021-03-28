@@ -10,24 +10,21 @@
 // This file may not be copied, modified, or distributed except according
 // to those terms.
 
+use crossbeam_channel::{self as channel, Receiver, Sender};
 use std::thread;
-use crossbeam_channel::{
-    self as channel,
-    Receiver,
-    Sender,
-};
 
 /// The type of function that can be sent to a `ThreadedActor<T>`.
-type Task<T,R> = dyn FnOnce(&mut T) -> R + Send;
+type Task<T, R> = dyn FnOnce(&mut T) -> R + Send;
 
 /// The boxed verion of the function for a `ThreadedActor<T>`.
-type BoxedTask<T,R> = Box<Task<T,R>>;
+type BoxedTask<T, R> = Box<Task<T, R>>;
 
 /// The type of task that can be queued to the `ThreadedActor<T>`.
+///
 /// This erases any return value from the user's function. A call() to the
 /// actor must wrap the user's function and send the return value back to
 /// the caller through a channel.
-type QueueTask<T> = BoxedTask<T,()>;
+type QueueTask<T> = BoxedTask<T, ()>;
 
 // --------------------------------------------------------------------------
 
@@ -78,7 +75,7 @@ where
         }
     }
 
-    /// Send an asynchronous request to the actor.
+    /// Sends an asynchronous request to the actor.
     ///
     /// This queues the request and returns immediately.
     pub fn cast<F>(&self, f: F)
@@ -88,16 +85,18 @@ where
         self.tx.send(Box::new(f)).unwrap();
     }
 
-    pub fn call<F,R>(&self, f: F) -> R
+    pub fn call<F, R>(&self, f: F) -> R
     where
         F: FnOnce(&mut T) -> R + Send + 'static,
-        R: Send + 'static
+        R: Send + 'static,
     {
         let (tx, rx) = channel::unbounded();
-        self.tx.send(Box::new(move |val: &mut T| {
-            let res = f(val);
-            tx.send(res).unwrap();
-        })).unwrap();
+        self.tx
+            .send(Box::new(move |val: &mut T| {
+                let res = f(val);
+                tx.send(res).unwrap();
+            }))
+            .unwrap();
 
         rx.recv().unwrap()
     }
