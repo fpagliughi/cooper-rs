@@ -79,18 +79,31 @@ where
     /// a response.
     pub fn call<F, R>(&self, f: F) -> R
     where
-        F: FnOnce(&mut T) -> R + Send + 'static,
+        F: FnOnce(Sender<R>, &mut T) -> Option<R> + Send + 'static,
         R: Send + 'static,
     {
         let (tx, rx) = channel::unbounded();
         self.tx
             .send(Box::new(move |val: &mut T| {
-                let res = f(val);
-                tx.send(res).unwrap();
+                if let Some(res) = f(tx.clone(), val) {
+                    tx.send(res).unwrap();
+                }
             }))
             .unwrap();
 
         rx.recv().unwrap()
+    }
+
+
+    /// Blocks the calling task until all requests up to this point have
+    /// been processed.
+    ///
+    /// Note that if there are clones of the actor, additional requests
+    /// may get queued after this one, so the queue is not guaranteed to be
+    /// empty when this returns; just that all the requests prior to this one
+    /// have completed.
+    pub fn flush(&self) {
+        self.call(move |_,_| Some(()));
     }
 }
 

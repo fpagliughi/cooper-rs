@@ -89,7 +89,7 @@ where
     /// return the result.
     pub async fn call<F, R>(&self, f: F) -> R
     where
-        F: for<'a> FnOnce(&'a mut S) -> BoxFuture<'a, R>,
+        F: for<'a> FnOnce(Sender<R>, &'a mut S) -> BoxFuture<'a, Option<R>>,
         F: 'static + Send,
         R: 'static + Send + Debug,
     {
@@ -97,8 +97,9 @@ where
         let msg = Message {
             func: Box::new(move |state| {
                 Box::pin(async move {
-                    let res = f(state).await;
-                    let _ = tx.send(res).await;
+                    if let Some(res) = f(tx.clone(), state).await {
+                        let _ = tx.send(res).await;
+                    }
                 })
             }),
         };
@@ -116,7 +117,7 @@ where
     /// empty when this returns; just that all the requests prior to this one
     /// have completed.
     pub async fn flush(&self) {
-        self.call(|_| Box::pin(async move {})).await
+        self.call(|_,_| Box::pin(async move { Some(()) })).await
     }
 }
 

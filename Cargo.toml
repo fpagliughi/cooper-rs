@@ -16,6 +16,7 @@ A simple, in-process, async Actor library for Rust.
 [dependencies]
 futures = "0.3"
 async-channel = "1.6"
+async-io = "1.3"
 crossbeam-channel = "0.5"
 smol = "1.2"
 

@@ -13,6 +13,7 @@
 
 use std::collections::HashMap;
 use cooper::Actor;
+use smol::block_on;
 
 /// The internal state type for the Actor
 type State = HashMap<String, String>;
@@ -41,7 +42,6 @@ impl SharedMap {
         }));
     }
 
-
     /// Gets the value, if any, from the shared map that is
     /// associated with the key.
     pub async fn get<K>(&self, key: K) -> Option<String>
@@ -50,8 +50,8 @@ impl SharedMap {
     {
         let key = key.into();
 
-        self.actor.call(|state| Box::pin(async move {
-            state.get(&key).map(|v| v.to_string())
+        self.actor.call(|_,state| Box::pin(async move {
+            Some(state.get(&key).map(|v| v.to_string()))
         })).await
     }
 }
@@ -59,9 +59,9 @@ impl SharedMap {
 // --------------------------------------------------------------------------
 
 fn main() {
-    let map = SharedMap::new();
+    block_on(async {
+        let map = SharedMap::new();
 
-    let h = smol::spawn(async move {
         println!("Inserting entry 'city'...");
         map.insert("city", "Boston");
 
@@ -71,7 +71,5 @@ fn main() {
             None => println!("Error: No entry found"),
         }
     });
-
-    smol::block_on(h);
 }
 

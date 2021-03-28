@@ -64,16 +64,14 @@ As an example, this is a key/value map that can be shared between different task
 type State = HashMap<String, String>;
 
 /// An actor that can act as a shared key/value store of strings.
-#[derive(Clone)]
+#[derive(Default, Clone)]
 pub struct SharedMap {
     actor: Actor<State>,
 }
 
 impl SharedMap {
     /// Create a new actor to share a key/value map of string.
-    pub fn new() -> Self {
-        Self { actor: Actor::new() }
-    }
+    pub fn new() -> Self { Self::default() }
 
     /// Insert a value into the shared map.
     pub async fn insert(&self, key: String, val: String) {
@@ -82,12 +80,11 @@ impl SharedMap {
         })).await
     }
 
-
     /// Gets the value, if any, from the shared map that is
     /// associated with the key.
     pub async fn get(&self, key: String) -> Option<String> {
-        self.actor.call(|state| Box::pin(async move {
-            state.get(&key).map(|v| v.to_string())
+        self.actor.call(|_,state| Box::pin(async move {
+            Some(state.get(&key).map(|v| v.to_string()))
         })).await
     }
 }
@@ -116,3 +113,49 @@ So, to continue with the example, the shared map can then be used by the applica
         );
     });
 ```
+
+### Deferred Return from `call()`
+
+The closure sent to a `call()` must return an `Option` to its value type. If it returns `Some(val)` then the `val` is returned to the caller when the closure completes.
+
+But if the closure returns `None`, then the Actor will **not** send anything back to the caller, leaving it blocked. It is then up to the user's code in the closure to send a value back to the client using the transmitter, `Sender<R>`, provided in the closure's parameter list, normally by spawning a detached task to execute a long-running operation, and moving the Sender to the sub-task.
+
+This frees the actor to continue processing requests from other clients while the one is blocked waiting for the subtask's "long" operation to complete.
+
+```
+actor.call(move |tx, _state| {
+    Box::pin(async move {
+        // Spawn a subtask to run a long operation, and let the subtask
+        // take the transmitter to send the return value back to the caller.
+        spawn(async move {
+            let ret_val = some_long_running_operation();
+            let _ = tx.send(ret_val).await;
+        }).detach();
+
+        // Now return control to the Actor's task so it can keep processing
+        // requests, though the individual caller is blocked awaiting the
+        // response from the subtask.
+        None
+    })
+)
+```
+
+Note, however, that in the current model, the spawned sub-task loses the ability to mutate the state as it can't move the ownership of the shared state reference into the sub-task.
+
+# TODO
+
+The Actor library is already fairly useful in a limited way. There are a number of features that would be required to make it more generally useful:
+
+- The ability to make requests back to itself. We can probably just send a clone of the Actor's main `Sender` to the closures.
+- The ability to schedule a callback, similar to Elixir's `Process.send_after()`. This would queue up a callback to fire on the actor's task after a specified amount of time. This would probably be pretty easy once the Actor closures have a clone of their own Sender. In Elixir, it's: `Process.send_after(self(), :do_something, 1_000)`
+- (Maybe) provide a way to have a periodic callback scheduled in the Actor. This might not be a good idea as it could pile up messages to the actor if it falls behind. But it's a common desire/use-case.
+- Allow for timeouts to wait for a `call()` to complete. On timeout, the user's task should be cancelled, if not already started (if possible). This normal `call()` should use a default timeout, like 5sec, but there should be something like: `call_with_timeout<F>(f: F, timeout: Duration)`
+
+
+
+
+
+
+
+
+

@@ -41,13 +41,12 @@ impl SharedMap {
         });
     }
 
-
     /// Gets the value, if any, from the shared map that is
     /// associated with the key.
     pub fn get<K: Into<String>>(&self, key: K) -> Option<String> {
         let key = key.into();
-        self.actor.call(move |state| {
-            state.get(&key).map(|v| v.to_string())
+        self.actor.call(move |_,state| {
+            Some(state.get(&key).map(|v| v.to_string()))
         })
     }
 }
