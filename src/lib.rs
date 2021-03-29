@@ -17,4 +17,3 @@ mod threaded_actor;
 
 pub use actor::*;
 pub use threaded_actor::*;
-

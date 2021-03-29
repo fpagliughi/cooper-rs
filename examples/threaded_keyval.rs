@@ -18,16 +18,14 @@ use cooper::ThreadedActor;
 type State = HashMap<String, String>;
 
 /// An actor that can act as a shared key/value store of strings.
-#[derive(Clone)]
+#[derive(Default, Clone)]
 pub struct SharedMap {
     actor: ThreadedActor<State>,
 }
 
 impl SharedMap {
     /// Create a new actor to share a key/value map of string.
-    pub fn new() -> Self {
-        Self { actor: ThreadedActor::new() }
-    }
+    pub fn new() -> Self { Self::default() }
 
     /// Insert a value into the shared map.
     pub fn insert<K,V>(&self, key: K, val: V)
@@ -43,13 +41,12 @@ impl SharedMap {
         });
     }
 
-
     /// Gets the value, if any, from the shared map that is
     /// associated with the key.
     pub fn get<K: Into<String>>(&self, key: K) -> Option<String> {
         let key = key.into();
-        self.actor.call(move |state| {
-            state.get(&key).map(|v| v.to_string())
+        self.actor.call(move |_,state| {
+            Some(state.get(&key).map(|v| v.to_string()))
         })
     }
 }

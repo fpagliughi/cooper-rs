@@ -12,24 +12,23 @@
 //
 
 use cooper::Actor;
+use smol::block_on;
 
 /// An actor that can create unique integer values from a counting integer.
-#[derive(Clone)]
+#[derive(Default, Clone)]
 pub struct UniqueId {
     actor: Actor<u32>,
 }
 
 impl UniqueId {
     /// Create a new UniqueId actor
-    pub fn new() -> Self {
-        Self { actor: Actor::new() }
-    }
+    pub fn new() -> Self { Self::default() }
 
     /// Gets a unique ID as the next integer value in the sequence.
     pub async fn get_unique_id(&self) -> u32 {
-        self.actor.call(|state| Box::pin(async move {
+        self.actor.call(|_,state| Box::pin(async move {
             *state += 1;
-            *state
+            Some(*state)
         })).await
     }
 }
@@ -37,9 +36,9 @@ impl UniqueId {
 // --------------------------------------------------------------------------
 
 fn main() {
-    let actor = UniqueId::new();
+    block_on(async {
+        let actor = UniqueId::new();
 
-    let h = smol::spawn(async move {
         let n = actor.get_unique_id().await;
         println!("ID: {}", n);
         assert_eq!(n, 1);
@@ -52,7 +51,5 @@ fn main() {
         println!("ID: {}", n);
         assert_eq!(n, 3);
     });
-
-    smol::block_on(h);
 }
 

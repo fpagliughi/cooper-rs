@@ -13,24 +13,23 @@
 
 use std::collections::HashMap;
 use cooper::Actor;
+use smol::block_on;
 
 /// The internal state type for the Actor
 type State = HashMap<String, String>;
 
 /// An actor that can act as a shared key/value store of strings.
-#[derive(Clone)]
+#[derive(Default, Clone)]
 pub struct SharedMap {
     actor: Actor<State>,
 }
 
 impl SharedMap {
     /// Create a new actor to share a key/value map of string.
-    pub fn new() -> Self {
-        Self { actor: Actor::new() }
-    }
+    pub fn new() -> Self { Self::default() }
 
     /// Insert a value into the shared map.
-    pub async fn insert<K,V>(&self, key: K, val: V)
+    pub fn insert<K,V>(&self, key: K, val: V)
     where
         K: Into<String>,
         V: Into<String>,
@@ -40,9 +39,8 @@ impl SharedMap {
 
         self.actor.cast(|state| Box::pin(async move {
             state.insert(key, val);
-        })).await
+        }));
     }
-
 
     /// Gets the value, if any, from the shared map that is
     /// associated with the key.
@@ -52,8 +50,8 @@ impl SharedMap {
     {
         let key = key.into();
 
-        self.actor.call(|state| Box::pin(async move {
-            state.get(&key).map(|v| v.to_string())
+        self.actor.call(|_,state| Box::pin(async move {
+            Some(state.get(&key).map(|v| v.to_string()))
         })).await
     }
 }
@@ -61,11 +59,11 @@ impl SharedMap {
 // --------------------------------------------------------------------------
 
 fn main() {
-    let map = SharedMap::new();
+    block_on(async {
+        let map = SharedMap::new();
 
-    let h = smol::spawn(async move {
         println!("Inserting entry 'city'...");
-        map.insert("city", "Boston").await;
+        map.insert("city", "Boston");
 
         println!("Retrieving entry...");
         match map.get("city").await {
@@ -73,7 +71,5 @@ fn main() {
             None => println!("Error: No entry found"),
         }
     });
-
-    smol::block_on(h);
 }
 
