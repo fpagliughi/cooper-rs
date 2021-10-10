@@ -49,7 +49,7 @@ where
 
         // TODO: Stash the handle somewhere?
         //  Perhaps make a registry of running actors?
-        smol::spawn(async move { Self::run(state, rx).await }).detach();
+        tokio::spawn(async move { Self::run(state, rx).await });
 
         Self { tx }
     }

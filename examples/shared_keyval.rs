@@ -12,7 +12,6 @@
 //
 
 use cooper::Actor;
-use smol::block_on;
 use std::collections::HashMap;
 
 /// The internal state type for the Actor
@@ -62,17 +61,16 @@ impl SharedMap {
 
 // --------------------------------------------------------------------------
 
-fn main() {
-    block_on(async {
-        let map = SharedMap::new();
+#[tokio::main]
+async fn main() {
+    let map = SharedMap::new();
 
-        println!("Inserting entry 'city'...");
-        map.insert("city", "Boston");
+    println!("Inserting entry 'city'...");
+    map.insert("city", "Boston");
 
-        println!("Retrieving entry...");
-        match map.get("city").await {
-            Some(s) => println!("Got: {}", s),
-            None => println!("Error: No entry found"),
-        }
-    });
+    println!("Retrieving entry...");
+    match map.get("city").await {
+        Some(s) => println!("Got: {}", s),
+        None => println!("Error: No entry found"),
+    }
 }

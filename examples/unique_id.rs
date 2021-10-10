@@ -12,7 +12,6 @@
 //
 
 use cooper::Actor;
-use smol::block_on;
 
 /// An actor that can create unique integer values from a counting integer.
 #[derive(Default, Clone)]
@@ -41,20 +40,19 @@ impl UniqueId {
 
 // --------------------------------------------------------------------------
 
-fn main() {
-    block_on(async {
-        let actor = UniqueId::new();
+#[tokio::main]
+async fn main() {
+    let actor = UniqueId::new();
 
-        let n = actor.get_unique_id().await;
-        println!("ID: {}", n);
-        assert_eq!(n, 1);
+    let n = actor.get_unique_id().await;
+    println!("ID: {}", n);
+    assert_eq!(n, 1);
 
-        let n = actor.get_unique_id().await;
-        println!("ID: {}", n);
-        assert_eq!(n, 2);
+    let n = actor.get_unique_id().await;
+    println!("ID: {}", n);
+    assert_eq!(n, 2);
 
-        let n = actor.get_unique_id().await;
-        println!("ID: {}", n);
-        assert_eq!(n, 3);
-    });
+    let n = actor.get_unique_id().await;
+    println!("ID: {}", n);
+    assert_eq!(n, 3);
 }
