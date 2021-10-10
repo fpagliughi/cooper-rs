@@ -13,6 +13,7 @@
 use async_channel::{self as channel, Receiver, Sender};
 use futures::future::BoxFuture;
 use std::fmt::Debug;
+use std::future::Future;
 
 /// Message type for the Actor.
 ///
@@ -39,6 +40,24 @@ where
     tx: Sender<Message<S>>,
 }
 
+#[cfg(not(feature = "tokio-rt"))]
+fn spawn<F>(future: F)
+where
+    F: Future + Send + 'static,
+    F::Output: Send + 'static,
+{
+    smol::spawn(future).detach();
+}
+
+#[cfg(feature = "tokio-rt")]
+fn spawn<F>(future: F)
+where
+    F: Future + Send + 'static,
+    F::Output: Send + 'static,
+{
+    tokio::spawn(future);
+}
+
 impl<S> Actor<S>
 where
     S: Send + 'static,
@@ -49,7 +68,7 @@ where
 
         // TODO: Stash the handle somewhere?
         //  Perhaps make a registry of running actors?
-        tokio::spawn(async move { Self::run(state, rx).await });
+        spawn(async move { Self::run(state, rx).await });
 
         Self { tx }
     }
