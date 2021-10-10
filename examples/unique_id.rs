@@ -22,14 +22,20 @@ pub struct UniqueId {
 
 impl UniqueId {
     /// Create a new UniqueId actor
-    pub fn new() -> Self { Self::default() }
+    pub fn new() -> Self {
+        Self::default()
+    }
 
     /// Gets a unique ID as the next integer value in the sequence.
     pub async fn get_unique_id(&self) -> u32 {
-        self.actor.call(|_,state| Box::pin(async move {
-            *state += 1;
-            Some(*state)
-        })).await
+        self.actor
+            .call(|_, state| {
+                Box::pin(async move {
+                    *state += 1;
+                    Some(*state)
+                })
+            })
+            .await
     }
 }
 
@@ -52,4 +58,3 @@ fn main() {
         assert_eq!(n, 3);
     });
 }
-

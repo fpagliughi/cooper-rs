@@ -10,8 +10,8 @@
 //
 //! cooper
 
-use futures::future::BoxFuture;
 use async_channel::{self as channel, Receiver, Sender};
+use futures::future::BoxFuture;
 use std::fmt::Debug;
 
 /// Message type for the Actor.
@@ -117,7 +117,7 @@ where
     /// empty when this returns; just that all the requests prior to this one
     /// have completed.
     pub async fn flush(&self) {
-        self.call(|_,_| Box::pin(async move { Some(()) })).await
+        self.call(|_, _| Box::pin(async move { Some(()) })).await
     }
 }
 
@@ -130,5 +130,3 @@ where
         Self::new(S::default())
     }
 }
-
-
