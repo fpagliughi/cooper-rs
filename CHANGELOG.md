@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Async `cast()` operations no longer async. (They don't need to be await'ed)
 - Switched to "async-channel" crate for use in all runtimes to come.
 - [PR #1](https://github.com/fpagliughi/cooper-rs/pull/1) Minor formatting and type fixes
+- [PR #2](https://github.com/fpagliughi/cooper-rs/pull/2) Supports the `tokio` runtime
 
 ## [v0.1.1](https://github.com/fpagliughi/cooper-rs/compare/v0.1.0..v0.1.1) - 2021-03-27
 
