@@ -15,6 +15,14 @@ use std::collections::HashMap;
 use cooper::Actor;
 use smol::block_on;
 
+/// Define the body of the actor closure
+/// Maybe call it "pinned_block", or something
+macro_rules! body {
+    ($b:expr) => {
+        Box::pin(async move { $b })
+    };
+}
+
 /// The internal state type for the Actor
 type State = HashMap<String, String>;
 
@@ -37,7 +45,7 @@ impl SharedMap {
         let key = key.into();
         let val = val.into();
 
-        self.actor.cast(|state| Box::pin(async move {
+        self.actor.cast(|state| body!({
             state.insert(key, val);
         }));
     }
@@ -50,7 +58,7 @@ impl SharedMap {
     {
         let key = key.into();
 
-        self.actor.call(|_,state| Box::pin(async move {
+        self.actor.call(|_,state| body!({
             Some(state.get(&key).map(|v| v.to_string()))
         })).await
     }
