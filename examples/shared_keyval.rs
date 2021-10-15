@@ -46,9 +46,11 @@ impl SharedMap {
         let key = key.into();
         let val = val.into();
 
-        self.actor.cast(|state| body!({
-            state.insert(key, val);
-        }));
+        self.actor.cast(|state| {
+            body!({
+                state.insert(key, val);
+            })
+        });
     }
 
     /// Gets the value, if any, from the shared map that is
@@ -59,9 +61,9 @@ impl SharedMap {
     {
         let key = key.into();
 
-        self.actor.call(|_,state| body!({
-            Some(state.get(&key).map(|v| v.to_string()))
-        })).await
+        self.actor
+            .call(|_, state| body!(Some(state.get(&key).map(|v| v.to_string()))))
+            .await
     }
 }
 
