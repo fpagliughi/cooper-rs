@@ -11,8 +11,8 @@
 // to those terms.
 //
 
-use std::collections::HashMap;
 use cooper::ThreadedActor;
+use std::collections::HashMap;
 
 /// The internal state type for the Actor
 type State = HashMap<String, String>;
@@ -25,10 +25,12 @@ pub struct SharedMap {
 
 impl SharedMap {
     /// Create a new actor to share a key/value map of string.
-    pub fn new() -> Self { Self::default() }
+    pub fn new() -> Self {
+        Self::default()
+    }
 
     /// Insert a value into the shared map.
-    pub fn insert<K,V>(&self, key: K, val: V)
+    pub fn insert<K, V>(&self, key: K, val: V)
     where
         K: Into<String>,
         V: Into<String>,
@@ -45,9 +47,8 @@ impl SharedMap {
     /// associated with the key.
     pub fn get<K: Into<String>>(&self, key: K) -> Option<String> {
         let key = key.into();
-        self.actor.call(move |_,state| {
-            Some(state.get(&key).map(|v| v.to_string()))
-        })
+        self.actor
+            .call(move |_, state| Some(state.get(&key).map(|v| v.to_string())))
     }
 }
 
@@ -65,4 +66,3 @@ fn main() {
         None => println!("Error: No entry found"),
     }
 }
-

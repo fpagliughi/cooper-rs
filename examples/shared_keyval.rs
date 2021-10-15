@@ -11,9 +11,8 @@
 // to those terms.
 //
 
-use std::collections::HashMap;
 use cooper::Actor;
-use smol::block_on;
+use std::collections::HashMap;
 
 /// Define the body of the actor closure
 /// Maybe call it "pinned_block", or something
@@ -34,10 +33,12 @@ pub struct SharedMap {
 
 impl SharedMap {
     /// Create a new actor to share a key/value map of string.
-    pub fn new() -> Self { Self::default() }
+    pub fn new() -> Self {
+        Self::default()
+    }
 
     /// Insert a value into the shared map.
-    pub fn insert<K,V>(&self, key: K, val: V)
+    pub fn insert<K, V>(&self, key: K, val: V)
     where
         K: Into<String>,
         V: Into<String>,
@@ -66,18 +67,16 @@ impl SharedMap {
 
 // --------------------------------------------------------------------------
 
-fn main() {
-    block_on(async {
-        let map = SharedMap::new();
+#[tokio::main]
+async fn main() {
+    let map = SharedMap::new();
 
-        println!("Inserting entry 'city'...");
-        map.insert("city", "Boston");
+    println!("Inserting entry 'city'...");
+    map.insert("city", "Boston");
 
-        println!("Retrieving entry...");
-        match map.get("city").await {
-            Some(s) => println!("Got: {}", s),
-            None => println!("Error: No entry found"),
-        }
-    });
+    println!("Retrieving entry...");
+    match map.get("city").await {
+        Some(s) => println!("Got: {}", s),
+        None => println!("Error: No entry found"),
+    }
 }
-

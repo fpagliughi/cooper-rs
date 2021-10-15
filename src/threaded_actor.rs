@@ -94,7 +94,6 @@ where
         rx.recv().unwrap()
     }
 
-
     /// Blocks the calling task until all requests up to this point have
     /// been processed.
     ///
@@ -103,7 +102,7 @@ where
     /// empty when this returns; just that all the requests prior to this one
     /// have completed.
     pub fn flush(&self) {
-        self.call(move |_,_| Some(()));
+        self.call(move |_, _| Some(()));
     }
 }
 
@@ -118,4 +117,3 @@ where
         Self::new(T::default())
     }
 }
-
