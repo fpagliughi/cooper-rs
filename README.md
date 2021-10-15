@@ -23,6 +23,19 @@ The project is under active development to achieve an MVP that can be used in a 
 
 For historic reasons, this initial implementation uses the `smol` library for channels and an executor, but by release time it will either be agnostic to the runtime or allow you to chose between `tokio`, `async-std`, or `smol`.
 
+For now, the `smol` runtime is still used by default, when supplying no features. If you want to use a `tokio` runtime, then compile with:
+
+```
+cargo build --features tokio-rt --no-default-features
+```
+
+or include the following in your `Cargo.toml` file:
+
+```toml
+[dependencies]
+cooper = { version = "*", features = ["tokio-rt"], no-default-features = true }
+```
+
 ## Huge Thanks
 
 This project sat idle on GitHub for three years while I waited for async/await to stabilize, and then tried to make heads or tails of it. After a few overly complicated failed attempts ...like writing an entire serial executor... it struck me that I just wanted a trivial async loop to execute closures sent to it. If only I could figure out how to queue the closures...

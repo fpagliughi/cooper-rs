@@ -10,9 +10,10 @@
 //
 //! cooper
 
-use futures::future::BoxFuture;
 use async_channel::{self as channel, Receiver, Sender};
+use futures::future::BoxFuture;
 use std::fmt::Debug;
+use std::future::Future;
 
 /// Message type for the Actor.
 ///
@@ -39,6 +40,24 @@ where
     tx: Sender<Message<S>>,
 }
 
+#[cfg(not(feature = "tokio-rt"))]
+fn spawn<F>(future: F)
+where
+    F: Future + Send + 'static,
+    F::Output: Send + 'static,
+{
+    smol::spawn(future).detach();
+}
+
+#[cfg(feature = "tokio-rt")]
+fn spawn<F>(future: F)
+where
+    F: Future + Send + 'static,
+    F::Output: Send + 'static,
+{
+    tokio::spawn(future);
+}
+
 impl<S> Actor<S>
 where
     S: Send + 'static,
@@ -49,7 +68,7 @@ where
 
         // TODO: Stash the handle somewhere?
         //  Perhaps make a registry of running actors?
-        smol::spawn(async move { Self::run(state, rx).await }).detach();
+        spawn(async move { Self::run(state, rx).await });
 
         Self { tx }
     }
@@ -117,7 +136,7 @@ where
     /// empty when this returns; just that all the requests prior to this one
     /// have completed.
     pub async fn flush(&self) {
-        self.call(|_,_| Box::pin(async move { Some(()) })).await
+        self.call(|_, _| Box::pin(async move { Some(()) })).await
     }
 }
 
@@ -130,5 +149,3 @@ where
         Self::new(S::default())
     }
 }
-
-
