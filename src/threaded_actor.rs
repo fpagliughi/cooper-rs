@@ -68,7 +68,7 @@ where
     /// This queues the request and returns immediately.
     pub fn cast<F>(&self, f: F)
     where
-        F: FnOnce(&mut T) -> () + Send + 'static,
+        F: FnOnce(&mut T) + Send + 'static,
     {
         self.tx.send(Box::new(f)).unwrap();
     }

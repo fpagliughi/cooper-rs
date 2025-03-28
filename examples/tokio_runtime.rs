@@ -32,7 +32,7 @@ impl SharedClient {
     }
 }
 
-#[cfg(not(feature = "tokio-rt"))]
+#[cfg(not(feature = "tokio"))]
 #[tokio::main]
 async fn main() {
     println!(
@@ -42,7 +42,7 @@ only runs on a tokio runtime."
     );
 }
 
-#[cfg(feature = "tokio-rt")]
+#[cfg(feature = "tokio")]
 #[tokio::main]
 async fn main() {
     let client = SharedClient::new();

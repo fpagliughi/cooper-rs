@@ -26,14 +26,14 @@ For historic reasons, this initial implementation uses the `smol` library for ch
 For now, the `smol` runtime is still used by default, when supplying no features. If you want to use a `tokio` runtime, then compile with:
 
 ```
-cargo build --features tokio-rt --no-default-features
+cargo build --features tokio --no-default-features
 ```
 
 or include the following in your `Cargo.toml` file:
 
 ```toml
 [dependencies]
-cooper = { version = "*", features = ["tokio-rt"], no-default-features = true }
+cooper = { version = "*", features = ["tokio"], no-default-features = true }
 ```
 
 ## Huge Thanks

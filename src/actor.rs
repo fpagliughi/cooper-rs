@@ -15,6 +15,9 @@ use futures::future::BoxFuture;
 use std::fmt::Debug;
 use std::future::Future;
 
+/// The actor function signature
+pub type BoxedActorFn<S> = Box<dyn for<'a> FnOnce(&'a mut S) -> BoxFuture<'a, ()> + Send>;
+
 /// Message type for the Actor.
 ///
 /// This wraps an async function type that takes a mutable reference to a
@@ -22,7 +25,7 @@ use std::future::Future;
 /// closures to process the state.
 /// `S` is the internal state type for the actor to manage
 struct Message<S> {
-    func: Box<dyn for<'a> FnOnce(&'a mut S) -> BoxFuture<'a, ()> + Send>,
+    func: BoxedActorFn<S>,
 }
 
 /// The Actor.
@@ -40,7 +43,7 @@ where
     tx: Sender<Message<S>>,
 }
 
-#[cfg(not(feature = "tokio-rt"))]
+#[cfg(not(feature = "tokio"))]
 fn spawn<F>(future: F)
 where
     F: Future + Send + 'static,
@@ -49,7 +52,7 @@ where
     smol::spawn(future).detach();
 }
 
-#[cfg(feature = "tokio-rt")]
+#[cfg(feature = "tokio")]
 fn spawn<F>(future: F)
 where
     F: Future + Send + 'static,

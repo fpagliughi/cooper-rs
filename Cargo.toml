@@ -5,7 +5,8 @@ authors = ["Frank Pagliughi <fpagliughi@mindspring.com>"]
 repository = "https://github.com/fpagliughi/cooper-rs"
 homepage = "https://github.com/fpagliughi/cooper-rs"
 license = "MIT"
-edition = "2018"
+edition = "2021"
+rust-version = "1.81"
 readme = "README.md"
 keywords = ["actors", "futures"]
 categories = ["asynchronous", "concurrency"]
@@ -13,19 +14,18 @@ description = """
 A simple, in-process, async Actor library for Rust.
 """
 
+[features]
+default = ["smol"]
+smol = ["dep:smol"]
+tokio = ["dep:tokio"]
+
 [dependencies]
 futures = "0.3"
 async-channel = "1.6"
 async-io = "1.3"
 crossbeam-channel = "0.5"
-
-# runtimes
 smol = { version = "1.2", optional = true }
 tokio = { version = "1", features = ["rt", "sync"], optional = true }
-
-[features]
-default = ["smol"]
-tokio-rt = ["tokio"]
 
 [dev-dependencies]
 tokio = { version = "1", features = ["rt", "rt-multi-thread", "sync", "macros"] }
