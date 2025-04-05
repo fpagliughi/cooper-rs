@@ -12,8 +12,27 @@
 
 use async_channel::{self as channel, Receiver, Sender};
 use futures::future::BoxFuture;
-use std::fmt::Debug;
-use std::future::Future;
+use std::{fmt::Debug, future::Future};
+
+/// Spawn for the smol executor
+#[cfg(not(feature = "tokio"))]
+fn spawn<F>(future: F)
+where
+    F: Future + Send + 'static,
+    F::Output: Send + 'static,
+{
+    smol::spawn(future).detach();
+}
+
+/// Spawn for the tokio executor
+#[cfg(feature = "tokio")]
+fn spawn<F>(future: F)
+where
+    F: Future + Send + 'static,
+    F::Output: Send + 'static,
+{
+    tokio::spawn(future);
+}
 
 /// The actor function signature
 pub type BoxedActorFn<S> = Box<dyn for<'a> FnOnce(&'a mut S) -> BoxFuture<'a, ()> + Send>;
@@ -24,9 +43,7 @@ pub type BoxedActorFn<S> = Box<dyn for<'a> FnOnce(&'a mut S) -> BoxFuture<'a, ()
 /// state object. Implementations of actor objects can queue functions and
 /// closures to process the state.
 /// `S` is the internal state type for the actor to manage
-struct Message<S> {
-    func: BoxedActorFn<S>,
-}
+struct Message<S>(BoxedActorFn<S>);
 
 /// The Actor.
 ///
@@ -41,24 +58,6 @@ where
 {
     /// The channel to send requests to the actor's processor task.
     tx: Sender<Message<S>>,
-}
-
-#[cfg(not(feature = "tokio"))]
-fn spawn<F>(future: F)
-where
-    F: Future + Send + 'static,
-    F::Output: Send + 'static,
-{
-    smol::spawn(future).detach();
-}
-
-#[cfg(feature = "tokio")]
-fn spawn<F>(future: F)
-where
-    F: Future + Send + 'static,
-    F::Output: Send + 'static,
-{
-    tokio::spawn(future);
 }
 
 impl<S> Actor<S>
@@ -82,7 +81,7 @@ where
     /// running the next one.
     async fn run(mut state: S, rx: Receiver<Message<S>>) {
         while let Ok(msg) = rx.recv().await {
-            (msg.func)(&mut state).await;
+            (msg.0)(&mut state).await;
         }
     }
 
@@ -94,13 +93,11 @@ where
         F: for<'a> FnOnce(&'a mut S) -> BoxFuture<'a, ()>,
         F: 'static + Send,
     {
-        let msg = Message {
-            func: Box::new(move |state| {
-                Box::pin(async move {
-                    f(state).await;
-                })
-            }),
-        };
+        let msg = Message(Box::new(move |state| {
+            Box::pin(async move {
+                f(state).await;
+            })
+        }));
 
         // TODO: Should we at least log the error?
         let _ = self.tx.try_send(msg);
@@ -116,15 +113,13 @@ where
         R: 'static + Send + Debug,
     {
         let (tx, rx) = channel::bounded(1);
-        let msg = Message {
-            func: Box::new(move |state| {
-                Box::pin(async move {
-                    if let Some(res) = f(tx.clone(), state).await {
-                        let _ = tx.send(res).await;
-                    }
-                })
-            }),
-        };
+        let msg = Message(Box::new(move |state| {
+            Box::pin(async move {
+                if let Some(res) = f(tx.clone(), state).await {
+                    let _ = tx.send(res).await;
+                }
+            })
+        }));
 
         let _ = self.tx.send(msg).await;
         // TODO: Return an error instead of panicking

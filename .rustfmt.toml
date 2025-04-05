@@ -1,1 +1,10 @@
+# .rustfmt.toml
+#
+# Code format definitions for the Rust "cooper-rs" Actor Library.
+#
+
 edition = "2021"
+
+# As of 2025-04-05, this is still unstable, requiring +nightly
+control_brace_style = "ClosingNextLine"
+
