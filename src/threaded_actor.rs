@@ -16,7 +16,7 @@ use std::thread;
 /// The type of function that can be sent to a `ThreadedActor<T>`.
 type Task<T, R> = dyn FnOnce(&mut T) -> R + Send;
 
-/// The boxed verion of the function for a `ThreadedActor<T>`.
+/// The boxed version of the function for a `ThreadedActor<T>`.
 type BoxedTask<T, R> = Box<Task<T, R>>;
 
 /// The type of task that can be queued to the `ThreadedActor<T>`.
@@ -39,10 +39,7 @@ pub struct ThreadedActor<T> {
     tx: Sender<QueueTask<T>>,
 }
 
-impl<T> ThreadedActor<T>
-where
-    T: Send + 'static,
-{
+impl<T: Send + 'static> ThreadedActor<T> {
     /// Creates a threaded actor with the specified initial state.
     pub fn new(state: T) -> Self {
         let (tx, rx) = channel::unbounded();
@@ -106,10 +103,7 @@ where
     }
 }
 
-impl<T> Default for ThreadedActor<T>
-where
-    T: Default + Send + 'static,
-{
+impl<T: Default + Send + 'static> Default for ThreadedActor<T> {
     /// Creates an actor with a default initial state.
     ///
     /// This requires the state type to implement the Default trait.

@@ -2,7 +2,7 @@
 #
 # This tests building 'cooper-rs', a Rust actor crate. It builds with 
 # various features enabled and disabled. This should be run before any
-# pull request of new fetures.
+# pull request of new features.
 
 # Extract MSRV from Cargo.toml and ensure it's the full version triplet
 # The value is stored in the variable `MSRV`
@@ -15,6 +15,10 @@ get_crate_msrv() {
 
 printf "\nFormat check...\n"
 ! cargo +nightly fmt --check --all && exit 1
+printf "    Ok\n"
+
+printf "\nCheck for typos...\n"
+! typos && exit 1
 printf "    Ok\n"
 
 get_crate_msrv

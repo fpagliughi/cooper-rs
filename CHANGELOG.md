@@ -2,6 +2,11 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v0.3.0  (Unreleased)
+
+- Bumped to MSRV 1.86, Edition 2024
+
+
 ## [v0.2.0](https://github.com/fpagliughi/cooper-rs/compare/v0.1.1..v0.2.0) - 2021-03-28
 
 - Added deferred return from `call()` operations by giving the return `Sender` to the user's closure.

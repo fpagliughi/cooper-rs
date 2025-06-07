@@ -109,7 +109,7 @@ The `state` parameter to the closure is a mutable reference to an object of the 
 self.actor.cast(|state: &mut State| ... ).await
 ```
 
-The closure is thus given a mutable reference to the actor's state object for each cast/call opeartion. Each one has exclusive, mutable access to the state object, and is guaranteed to run to completion in the order received, and thus is atomic over the state.
+The closure is thus given a mutable reference to the actor's state object for each cast/call operation. Each one has exclusive, mutable access to the state object, and is guaranteed to run to completion in the order received, and thus is atomic over the state.
 
 So, to continue with the example, the shared map can then be used by the application or other actors in an async block, like:
 

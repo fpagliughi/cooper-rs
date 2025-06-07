@@ -52,18 +52,12 @@ struct Message<S>(BoxedActorFn<S>);
 /// order received, and thus tasks do not need to lock or protect the state
 /// for access.
 #[derive(Clone)]
-pub struct Actor<S>
-where
-    S: Send + 'static,
-{
+pub struct Actor<S: Send + 'static> {
     /// The channel to send requests to the actor's processor task.
     tx: Sender<Message<S>>,
 }
 
-impl<S> Actor<S>
-where
-    S: Send + 'static,
-{
+impl<S: Send + 'static> Actor<S> {
     /// Creates a new actor from an initial state.
     pub fn new(state: S) -> Self {
         let (tx, rx) = channel::unbounded();
@@ -90,8 +84,7 @@ where
     /// It does not wait for the operation to be executed.
     pub fn cast<F>(&self, f: F)
     where
-        F: for<'a> FnOnce(&'a mut S) -> BoxFuture<'a, ()>,
-        F: 'static + Send,
+        F: for<'a> FnOnce(&'a mut S) -> BoxFuture<'a, ()> + 'static + Send,
     {
         let msg = Message(Box::new(move |state| {
             Box::pin(async move {
@@ -108,8 +101,7 @@ where
     /// return the result.
     pub async fn call<F, R>(&self, f: F) -> R
     where
-        F: for<'a> FnOnce(Sender<R>, &'a mut S) -> BoxFuture<'a, Option<R>>,
-        F: 'static + Send,
+        F: for<'a> FnOnce(Sender<R>, &'a mut S) -> BoxFuture<'a, Option<R>> + 'static + Send,
         R: 'static + Send + Debug,
     {
         let (tx, rx) = channel::bounded(1);
@@ -138,10 +130,7 @@ where
     }
 }
 
-impl<S> Default for Actor<S>
-where
-    S: Default + Send + 'static,
-{
+impl<S: Default + Send + 'static> Default for Actor<S> {
     /// Creates a new actor with a default state.
     fn default() -> Self {
         Self::new(S::default())
