@@ -13,7 +13,10 @@
 //! cooper
 
 mod actor;
+pub use actor::*;
+
+#[cfg(feature = "threaded")]
 mod threaded_actor;
 
-pub use actor::*;
+#[cfg(feature = "threaded")]
 pub use threaded_actor::*;

@@ -18,20 +18,25 @@ A simple, in-process, async Actor library for Rust.
 default = ["tokio"]
 smol = ["dep:smol"]
 tokio = ["dep:tokio"]
+threaded = ["crossbeam-channel"]
 
 [dependencies]
 futures = "0.3"
 async-channel = "2.3"
-crossbeam-channel = "0.5"
+crossbeam-channel = { version = "0.5", optional = true }
 smol = { version = "2.0", optional = true }
 tokio = { version = "1", features = ["rt", "sync"], optional = true }
 
 [dev-dependencies]
 tokio = { version = "1", features = ["rt", "rt-multi-thread", "sync", "macros"] }
-reqwest = { version = "*", features = ["json"] }
+reqwest = { version = "0.12", features = ["json"] }
 serde_json = "1.0"
 
 [[example]]
 name = "tokio_runtime"
 required-features = ["tokio"]
+
+[[example]]
+name = "threaded_keyval"
+required-features = ["threaded"]
 
