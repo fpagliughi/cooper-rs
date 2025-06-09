@@ -22,7 +22,7 @@ impl SharedClient {
     pub async fn fetch(&self, url: impl Into<String>) -> Value {
         let url = url.into();
         self.actor
-            .call(|_, state| {
+            .call(|state| {
                 Box::pin(async move {
                     let res = state.client.get(url).send().await.unwrap();
                     Some(res.json().await.unwrap())

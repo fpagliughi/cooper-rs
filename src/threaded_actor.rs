@@ -76,15 +76,34 @@ impl<T: Send + 'static> ThreadedActor<T> {
     /// a response.
     pub fn call<F, R>(&self, f: F) -> R
     where
-        F: FnOnce(Sender<R>, &mut T) -> Option<R> + Send + 'static,
+        F: FnOnce(&mut T) -> Option<R> + Send + 'static,
+        R: Send + 'static,
+    {
+        let (tx, rx) = channel::bounded(1);
+        self.tx
+            .send(Box::new(move |val: &mut T| {
+                if let Some(res) = f(val) {
+                    tx.send(res).unwrap();
+                }
+            }))
+            .unwrap();
+
+        rx.recv().unwrap()
+    }
+
+    /// Sends a synchronous request to the actor.
+    ///
+    /// This queues the request to the actor thread, then blocks waiting for
+    /// a response.
+    pub fn call_deferred<F, R>(&self, f: F) -> R
+    where
+        F: FnOnce(Sender<R>, &mut T) + Send + 'static,
         R: Send + 'static,
     {
         let (tx, rx) = channel::unbounded();
         self.tx
             .send(Box::new(move |val: &mut T| {
-                if let Some(res) = f(tx.clone(), val) {
-                    tx.send(res).unwrap();
-                }
+                f(tx, val);
             }))
             .unwrap();
 
@@ -99,7 +118,7 @@ impl<T: Send + 'static> ThreadedActor<T> {
     /// empty when this returns; just that all the requests prior to this one
     /// have completed.
     pub fn flush(&self) {
-        self.call(move |_, _| Some(()));
+        self.call(move |_| Some(()));
     }
 }
 

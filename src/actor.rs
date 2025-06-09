@@ -84,7 +84,7 @@ impl<S: Send + 'static> Actor<S> {
     /// It does not wait for the operation to be executed.
     pub fn cast<F>(&self, f: F)
     where
-        F: for<'a> FnOnce(&'a mut S) -> BoxFuture<'a, ()> + 'static + Send,
+        F: for<'a> FnOnce(&'a mut S) -> BoxFuture<'a, ()> + Send + 'static,
     {
         // TODO: Should we at least log the error?
         let _ = self.tx.try_send(cast_fn(Box::new(f)));
@@ -95,16 +95,37 @@ impl<S: Send + 'static> Actor<S> {
     /// return the result.
     pub async fn call<F, R>(&self, f: F) -> R
     where
-        F: for<'a> FnOnce(Sender<R>, &'a mut S) -> BoxFuture<'a, Option<R>> + 'static + Send,
-        R: 'static + Send + Debug,
+        F: for<'a> FnOnce(&'a mut S) -> BoxFuture<'a, Option<R>> + Send + 'static,
+        R: Send + 'static + Debug,
     {
         let (tx, rx) = channel::bounded(1);
 
         let f = cast_fn(Box::new(move |state| {
             Box::pin(async move {
-                if let Some(res) = f(tx.clone(), state).await {
+                if let Some(res) = f(state).await {
                     let _ = tx.send(res).await;
                 }
+            })
+        }));
+
+        let _ = self.tx.send(f).await;
+        // TODO: Return an error instead of panicking
+        rx.recv().await.expect("Actor is gone")
+    }
+
+    /// A call is a synchronous operation within the async task.
+    /// It will queue the request, wait for it to execute, and
+    /// return the result.
+    pub async fn call_deferred<F, R>(&self, f: F) -> R
+    where
+        F: for<'a> FnOnce(Sender<R>, &'a mut S) -> BoxFuture<'a, ()> + Send + 'static,
+        R: Send+ 'static + Debug,
+    {
+        let (tx, rx) = channel::bounded(1);
+
+        let f = cast_fn(Box::new(move |state| {
+            Box::pin(async move {
+                f(tx.clone(), state).await;
             })
         }));
 
@@ -121,7 +142,7 @@ impl<S: Send + 'static> Actor<S> {
     /// empty when this returns; just that all the requests prior to this one
     /// have completed.
     pub async fn flush(&self) {
-        self.call(|_, _| Box::pin(async move { Some(()) })).await
+        self.call(|_| Box::pin(async move { Some(()) })).await
     }
 }
 

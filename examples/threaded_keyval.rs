@@ -48,7 +48,7 @@ impl SharedMap {
     pub fn get<K: Into<String>>(&self, key: K) -> Option<String> {
         let key = key.into();
         self.actor
-            .call(move |_, state| Some(state.get(&key).map(|v| v.to_string())))
+            .call(move |state| Some(state.get(&key).map(|v| v.to_string())))
     }
 }
 
