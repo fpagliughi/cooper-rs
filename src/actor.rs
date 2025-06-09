@@ -37,13 +37,13 @@ where
 /// The actor function signature
 pub type BoxedActorFn<S> = Box<dyn for<'a> FnOnce(&'a mut S) -> BoxFuture<'a, ()> + Send>;
 
-/// Message type for the Actor.
-///
-/// This wraps an async function type that takes a mutable reference to a
-/// state object. Implementations of actor objects can queue functions and
-/// closures to process the state.
-/// `S` is the internal state type for the actor to manage
-struct Message<S>(BoxedActorFn<S>);
+// Helper function to add new functions to the map
+#[inline]
+pub fn cast_fn<S>(func: BoxedActorFn<S>) -> BoxedActorFn<S> {
+    func
+}
+
+/////////////////////////////////////////////////////////////////////////////
 
 /// The Actor.
 ///
@@ -54,7 +54,7 @@ struct Message<S>(BoxedActorFn<S>);
 #[derive(Clone)]
 pub struct Actor<S: Send + 'static> {
     /// The channel to send requests to the actor's processor task.
-    tx: Sender<Message<S>>,
+    tx: Sender<BoxedActorFn<S>>,
 }
 
 impl<S: Send + 'static> Actor<S> {
@@ -73,9 +73,9 @@ impl<S: Send + 'static> Actor<S> {
     ///
     /// This runs each request for the actor to completion before
     /// running the next one.
-    async fn run(mut state: S, rx: Receiver<Message<S>>) {
-        while let Ok(msg) = rx.recv().await {
-            (msg.0)(&mut state).await;
+    async fn run(mut state: S, rx: Receiver<BoxedActorFn<S>>) {
+        while let Ok(f) = rx.recv().await {
+            f(&mut state).await;
         }
     }
 
@@ -86,14 +86,8 @@ impl<S: Send + 'static> Actor<S> {
     where
         F: for<'a> FnOnce(&'a mut S) -> BoxFuture<'a, ()> + 'static + Send,
     {
-        let msg = Message(Box::new(move |state| {
-            Box::pin(async move {
-                f(state).await;
-            })
-        }));
-
         // TODO: Should we at least log the error?
-        let _ = self.tx.try_send(msg);
+        let _ = self.tx.try_send(cast_fn(Box::new(f)));
     }
 
     /// A call is a synchronous operation within the async task.
@@ -105,7 +99,8 @@ impl<S: Send + 'static> Actor<S> {
         R: 'static + Send + Debug,
     {
         let (tx, rx) = channel::bounded(1);
-        let msg = Message(Box::new(move |state| {
+
+        let f = cast_fn(Box::new(move |state| {
             Box::pin(async move {
                 if let Some(res) = f(tx.clone(), state).await {
                     let _ = tx.send(res).await;
@@ -113,7 +108,7 @@ impl<S: Send + 'static> Actor<S> {
             })
         }));
 
-        let _ = self.tx.send(msg).await;
+        let _ = self.tx.send(f).await;
         // TODO: Return an error instead of panicking
         rx.recv().await.expect("Actor is gone")
     }
