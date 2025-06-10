@@ -119,7 +119,7 @@ impl<S: Send + 'static> Actor<S> {
     pub async fn call_deferred<F, R>(&self, f: F) -> R
     where
         F: for<'a> FnOnce(Sender<R>, &'a mut S) -> BoxFuture<'a, ()> + Send + 'static,
-        R: Send+ 'static + Debug,
+        R: Send + 'static + Debug,
     {
         let (tx, rx) = channel::bounded(1);
 
