@@ -1,8 +1,0 @@
-[default.extend-words]
-thr = "thr"
-
-[files]
-extend-exclude = [
-    "qhistory"
-]
-

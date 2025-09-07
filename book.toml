@@ -1,0 +1,5 @@
+[book]
+authors = ["fpagliughi"]
+language = "en"
+src = "src"
+title = "cooper-rs"
